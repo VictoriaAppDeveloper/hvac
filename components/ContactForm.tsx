@@ -15,12 +15,14 @@ const FIELDS = [
 
 export default function ContactForm() {
   const [status, setStatus] = useState<Status>("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus("loading");
 
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
     formData.append("access_key", WEB3FORMS_ACCESS_KEY);
 
     try {
@@ -29,9 +31,15 @@ export default function ContactForm() {
         body: formData,
       });
       const result = await res.json();
-      setStatus(result.success ? "success" : "error");
-      if (result.success) e.currentTarget.reset();
+      if (result.success) {
+        setStatus("success");
+        form.reset();
+      } else {
+        setErrorMessage(result.message || "Submission was rejected.");
+        setStatus("error");
+      }
     } catch {
+      setErrorMessage("Network error.");
       setStatus("error");
     }
   }
@@ -88,7 +96,7 @@ export default function ContactForm() {
       </button>
 
       {status === "error" && (
-        <p className="text-sm text-red-600">Something went wrong. Please try again or email us directly.</p>
+        <p className="text-sm text-red-600">{errorMessage} Please try again or email us directly.</p>
       )}
     </form>
   );
